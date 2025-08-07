@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const helmet = require("helmet");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
+const session = require('express-session');
 const app = express();
 
 const connectDB = require("./db");
@@ -26,7 +27,8 @@ const seoRoutes = require("./routes/seoRoutes");
 const motifRoutes = require("./routes/motifRoutes");
 const roleManagementRoutes = require("./routes/roleManagementRoutes");
 const staticSeoRoutes = require("./routes/staticSeoRoutes");
-const apiKeyMiddleware = require("./middleware/apiKeyMiddleware"); // Import the new middleware
+const userRoutes = require("./routes/userRoutes");
+const apiKeyMiddleware = require("./middleware/apiKeyMiddleware");
 
 const port = process.env.PORT || 7000;
 connectDB();
@@ -86,7 +88,18 @@ app.use(
   })
 );
 
-// 🚀 SECURITY WITH PERFORMANCE
+// SECURITY WITH PERFORMANCE
+// Session configuration
+app.use(session({
+  secret: 'your-secret-key', // Change this to a secure random string in production
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: false, // Set to true if using HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -97,7 +110,7 @@ app.use(
 // Apply API Key Middleware
 app.use(apiKeyMiddleware);
 
-// 🚀 RESPONSE TIME MONITORING (silent)
+// RESPONSE TIME MONITORING (silent)
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -125,7 +138,7 @@ requiredEnv.forEach((key) => {
   }
 });
 
-// 🚀 CACHE HEADERS for better performance
+// CACHE HEADERS for better performance
 app.use((req, res, next) => {
   // Cache static assets for 1 hour
   if (req.path.includes("/images/") || req.path.includes("/static/")) {
@@ -157,6 +170,7 @@ app.use("/api/seo", seoRoutes);
 app.use("/api/motif", motifRoutes);
 app.use("/api/roles", roleManagementRoutes);
 app.use("/api/static-seo", staticSeoRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the vivek API world");
