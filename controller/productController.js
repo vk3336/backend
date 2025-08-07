@@ -147,27 +147,12 @@ const create = async (req, res) => {
     // Debug: Log all request body and files for inspection
     console.log("[DEBUG] Product create request body:", req.body);
     console.log("[DEBUG] Product create request files:", req.files);
-    // Validate image files
+    // Removed validation for image and video fields
     const imageFields = ["file", "image1", "image2"];
     for (const field of imageFields) {
       if (req.files && req.files[field] && req.files[field][0]) {
         const fileObj = req.files[field][0];
-        if (fileObj.size > MAX_IMAGE_SIZE) {
-          return res.status(400).json({
-            success: false,
-            message: `Image file size for ${field} exceeds limit (${
-              MAX_IMAGE_SIZE / (1024 * 1024)
-            }MB)`,
-          });
-        }
-        if (!isValidExtension(fileObj.originalname, ALLOWED_IMAGE_EXTENSIONS)) {
-          return res.status(400).json({
-            success: false,
-            message: `Invalid image extension for ${field}. Allowed: ${ALLOWED_IMAGE_EXTENSIONS.join(
-              ", "
-            )}`,
-          });
-        }
+        // Removed size and extension validation
       }
     }
     // Validate video file
