@@ -71,12 +71,9 @@ const createSeo = async (req, res) => {
 const getAllSeo = async (req, res) => {
   try {
     // 🚀 PERFORMANCE OPTIMIZATIONS - NO LIMITS, ALL DATA
-    
+
     // 🚀 GET ALL SEO DATA - NO PAGINATION LIMITS
-    const seoList = await Seo.find()
-      .populate("product", "name img category") // Select only needed fields
-      .lean() // Convert to plain objects for speed
-      .exec();
+    const seoList = await Seo.find();
 
     res.status(200).json({
       success: true,
