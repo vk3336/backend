@@ -591,6 +591,9 @@ const update = async (req, res) => {
         }
         updateData.img = uploadResult.secure_url;
       }
+    } else if (req.body.img) {
+      // Preserve existing image URL if no new file is provided
+      updateData.img = req.body.img;
     }
     // Handle image1
     if (req.files && req.files.image1 && req.files.image1[0]) {
@@ -608,6 +611,9 @@ const update = async (req, res) => {
         }
         updateData.image1 = upload1.secure_url;
       }
+    } else if (req.body.image1) {
+      // Preserve existing image1 URL if no new file is provided
+      updateData.image1 = req.body.image1;
     }
     // Handle image2
     if (req.files && req.files.image2 && req.files.image2[0]) {
@@ -625,6 +631,9 @@ const update = async (req, res) => {
         }
         updateData.image2 = upload2.secure_url;
       }
+    } else if (req.body.image2) {
+      // Preserve existing image2 URL if no new file is provided
+      updateData.image2 = req.body.image2;
     }
 
     // Handle video
@@ -652,6 +661,10 @@ const update = async (req, res) => {
       } else if (videoResult && videoResult.secure_url) {
         updateData.video = videoResult.secure_url;
       }
+    } else if (req.body.video) {
+      // Preserve existing video URL if no new file is provided
+      updateData.video = req.body.video;
+      updateData.videoThumbnail = req.body.videoThumbnail || "";
     }
 
     // 🚀 BATCH VALIDATION if references are being updated
