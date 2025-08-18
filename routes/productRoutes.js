@@ -22,7 +22,7 @@ router.put(
   "/:id",
   productController.multiUpload,
   productController.handleColorArray,
-  productController.validate,
+  productController.updateValidate,  // Using updateValidate instead of validate
   productController.update
 );
 

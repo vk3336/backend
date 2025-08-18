@@ -58,7 +58,7 @@ function isValidExtension(filename, allowedExts) {
   return allowedExts.includes(ext);
 }
 
-// 🚀 OPTIMIZED VALIDATION - Single batch validation
+// Validation for create (all fields required)
 const validate = [
   body("name")
     .trim()
@@ -122,6 +122,58 @@ const validate = [
   body("oz").optional().isNumeric(),
   body("cm").optional().isNumeric(),
   body("inch").optional().isNumeric(),
+];
+
+// Validation for update (all fields optional)
+const updateValidate = [
+  body("name").optional().trim().isLength({ min: 2 }),
+  body("category").optional().isMongoId(),
+  body("substructure").optional().isMongoId(),
+  body("content").optional().isMongoId(),
+  body("design").optional().isMongoId(),
+  body("subfinish").optional().isMongoId(),
+  body("subsuitable").optional().isMongoId(),
+  body("vendor").optional().isMongoId(),
+  body("groupcode").optional().isMongoId(),
+  body("color").optional().isArray(),
+  body("color.*").optional().isMongoId(),
+  body("motif").optional().isMongoId(),
+  body("um").optional().isString(),
+  body("currency").optional().isString(),
+  body("gsm").optional().isNumeric(),
+  body("oz").optional().isNumeric(),
+  body("cm").optional().isNumeric(),
+  body("inch").optional().isNumeric(),
+  body("quantity").optional().isNumeric(),
+  body("salesPrice").optional().isNumeric(),
+  body("purchasePrice").optional().isNumeric(),
+  body("description").optional().isString(),
+  body("specification").optional().isString(),
+  body("metaTitle").optional().isString(),
+  body("metaDescription").optional().isString(),
+  body("metaKeywords").optional().isString(),
+  body("status").optional().isBoolean(),
+  body("featured").optional().isBoolean(),
+  body("inStock").optional().isBoolean(),
+  body("lowStockThreshold").optional().isNumeric(),
+  body("weight").optional().isNumeric(),
+  body("dimensions.length").optional().isNumeric(),
+  body("dimensions.width").optional().isNumeric(),
+  body("dimensions.height").optional().isNumeric(),
+  body("tags").optional().isArray(),
+  body("tags.*").optional().isString(),
+  body("relatedProducts").optional().isArray(),
+  body("relatedProducts.*").optional().isMongoId(),
+  body("attributes").optional().isObject(),
+  body("variants").optional().isArray(),
+  body("reviews").optional().isArray(),
+  body("rating").optional().isNumeric(),
+  body("reviewCount").optional().isInt(),
+  body("sold").optional().isInt(),
+  body("views").optional().isInt(),
+  body("wishlist").optional().isInt(),
+  body("seo").optional().isObject(),
+  body("slug").optional().isString(),
 ];
 
 const create = async (req, res) => {
@@ -478,6 +530,17 @@ const update = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ success: false, errors: errors.array() });
   }
+  
+  // 1. Normalize req.files (multer.any() => array) into { [fieldname]: File[] }
+  if (Array.isArray(req.files)) {
+    const filesObj = {};
+    for (const f of req.files) {
+      if (!filesObj[f.fieldname]) filesObj[f.fieldname] = [];
+      filesObj[f.fieldname].push(f);
+    }
+    req.files = filesObj;
+  }
+  console.log('[DEBUG] update -> files keys:', Object.keys(req.files || {}));
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
@@ -512,20 +575,19 @@ const update = async (req, res) => {
       }
     }
 
-    // Handle main image (img)
-    if (req.files && req.files.file && req.files.file[0]) {
+    // Handle main image: accept 'file' OR 'img'
+    const mainImageFile = (req.files?.file?.[0]) || (req.files?.img?.[0]);
+    if (mainImageFile) {
       const uploadResult = await cloudinaryServices.cloudinaryImageUpload(
-        req.files.file[0].buffer,
-        req.body.name || oldProduct.name || "product",
+        mainImageFile.buffer,
+        req.body.name || oldProduct.name || 'product',
         categoryFolder
       );
-      if (uploadResult && uploadResult.secure_url) {
-        // Delete old image from Cloudinary
+      if (uploadResult?.secure_url) {
+        // Delete old image from Cloudinary if it exists
         if (oldProduct.img) {
-          const publicId = oldProduct.img.split("/").pop().split(".")[0];
-          cloudinaryServices
-            .cloudinaryImageDelete(publicId)
-            .catch(console.error);
+          const publicId = oldProduct.img.split('/').pop().split('.')[0];
+          cloudinaryServices.cloudinaryImageDelete(publicId).catch(console.error);
         }
         updateData.img = uploadResult.secure_url;
       }
@@ -985,6 +1047,7 @@ module.exports = {
   update,
   deleteById,
   validate,
+  updateValidate,
   searchProducts,
   getProductsByGroupcode,
   getProductsByCategory,
